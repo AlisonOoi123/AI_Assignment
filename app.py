@@ -11,22 +11,31 @@ st.markdown(
         background-size: cover;
     }}
     .table-container {{
-        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+        background-color: rgba(50, 50, 50, 0.9); /* Dark grey background with slight transparency */
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); /* Shadow for better visibility */
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5); /* Shadow for better visibility */
+        overflow-x: auto; /* Allows horizontal scrolling if needed */
     }}
     table {{
         width: 100%;
         border-collapse: collapse;
+        table-layout: auto; /* Ensures table resizes based on content */
     }}
     th, td {{
-        border: 1px solid #ddd;
+        border: 1px solid #555; /* Darker border for better visibility */
         padding: 8px;
         text-align: left;
     }}
     th {{
-        background-color: #f4f4f4;
+        background-color: #333; /* Dark grey background for header */
+        color: #ffffff; /* White text for header */
+    }}
+    td {{
+        color: #ffffff; /* White text for all columns */
+    }}
+    td.url {{
+        color: #1a0dab; /* Blue color for URL text */
     }}
     </style>
     """,
@@ -64,13 +73,6 @@ location_csv_map = {
     'Petaling Jaya': 'Restaurants_Petaling Jaya.csv',
     'Shah Alam': 'Restaurants_Shah Alam.csv'
 }
-
-# Streamlit inputs
-place = st.selectbox("Select the state location:", 
-                     ['KL', 'Ipoh', 'JB', 'Kuching', 'Langkawi', 'Melaka', 'Miri', 'Penang', 'Petaling Jaya', 'Shah Alam'])
-top_n = st.text_input("Enter the number of top results:", "10")
-min_rating = st.text_input("Minimum rating:", "0")
-max_rating = st.text_input("Maximum rating:", "5")
 
 def update_display(location, top_n, min_rating, max_rating):
     try:
@@ -125,45 +127,52 @@ def update_display(location, top_n, min_rating, max_rating):
         popular_restaurants = popular_restaurants.rename(columns={
             'Restaurant': 'Name',
             'Total Reviews': 'Number of Reviews',
-            'Combined Rating': 'Average Rating'
+            'Combined Rating': 'Average Rating',
+            'url': 'URL'
         })
 
         # Add a ranking column
         popular_restaurants.reset_index(drop=True, inplace=True)
         popular_restaurants.index += 1
         popular_restaurants.index.name = 'Rank'
+        popular_restaurants['Rank'] = popular_restaurants.index
 
         # Convert the restaurant name and URL to clickable links
-        popular_restaurants['url'] = popular_restaurants.apply(lambda row: f'<a href="{row["url"]}" target="_blank">{row["Name"]}</a>', axis=1)
+        popular_restaurants['URL'] = popular_restaurants.apply(lambda row: f'<a href="{row["URL"]}" class="url" target="_blank">{row["Name"]}</a>', axis=1)
 
         # Display the DataFrame with styling
-        st.markdown('<div class="table-container">' + popular_restaurants[['Name', 'Location', 'Number of Reviews', 'Average Rating', 'url']].to_html(escape=False) + '</div>', unsafe_allow_html=True)
+        table_placeholder = st.empty()
+        table_placeholder.markdown('<div class="table-container">' + popular_restaurants[['Rank', 'Name', 'Location', 'Number of Reviews', 'Average Rating', 'URL']].to_html(escape=False, index=False) + '</div>', unsafe_allow_html=True)
 
-        # Display reviews for the selected restaurant
-        if popular_restaurants.empty:
-            st.warning("No restaurants found in the specified rating range and top N.")
-            return
+        # Dropdown to select restaurant
+        restaurant_list = popular_restaurants['Name'].tolist()
+        selected_restaurant = st.selectbox("Select a restaurant to see reviews:", restaurant_list)
 
-        # Get the selected restaurant name
-        selected_restaurant = popular_restaurants.iloc[0]['Name']
+        if selected_restaurant:
+            # Extract reviews for the selected restaurant
+            google_reviews = google_review_data[google_review_data['Restaurant'] == selected_restaurant]
+            tripadvisor_reviews = tripadvisor_data[tripadvisor_data['Restaurant'] == selected_restaurant]
 
-        # Extract reviews for the selected restaurant
-        google_reviews = google_review_data[google_review_data['Restaurant'] == selected_restaurant]
-        tripadvisor_reviews = tripadvisor_data[tripadvisor_data['Restaurant'] == selected_restaurant]
-
-        # Display reviews
-        if not google_reviews.empty:
+            # Display reviews
             st.markdown(f"### Google Reviews for {selected_restaurant}")
-            st.dataframe(google_reviews[['Author', 'Review']])
+            if not google_reviews.empty:
+                st.dataframe(google_reviews[['Author', 'Review']])
 
-        if not tripadvisor_reviews.empty:
             st.markdown(f"### TripAdvisor Reviews for {selected_restaurant}")
-            st.dataframe(tripadvisor_reviews[['Author', 'Review']])
+            if not tripadvisor_reviews.empty:
+                st.dataframe(tripadvisor_reviews[['Author', 'Review']])
 
     except ValueError as e:
         st.error(f"Error: {e}")
     except KeyError as e:
         st.error(f"Error: {e}")
+
+# Streamlit inputs
+place = st.selectbox("Select the state location:", 
+                     ['KL', 'Ipoh', 'JB', 'Kuching', 'Langkawi', 'Melaka', 'Miri', 'Penang', 'Petaling Jaya', 'Shah Alam'])
+top_n = st.text_input("Enter the number of top results:", "10")
+min_rating = st.text_input("Minimum rating:", "0")
+max_rating = st.text_input("Maximum rating:", "5")
 
 # Run the update_display function based on user inputs
 if st.button("Search"):

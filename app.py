@@ -144,24 +144,6 @@ def update_display(location, top_n, min_rating, max_rating):
         table_placeholder = st.empty()
         table_placeholder.markdown('<div class="table-container">' + popular_restaurants[['Rank', 'Name', 'Location', 'Number of Reviews', 'Average Rating', 'URL']].to_html(escape=False, index=False) + '</div>', unsafe_allow_html=True)
 
-        # Dropdown to select restaurant
-        restaurant_list = popular_restaurants['Name'].tolist()
-        selected_restaurant = st.selectbox("Select a restaurant to see reviews:", restaurant_list)
-
-        if selected_restaurant:
-            # Extract reviews for the selected restaurant
-            google_reviews = google_review_data[google_review_data['Restaurant'] == selected_restaurant]
-            tripadvisor_reviews = tripadvisor_data[tripadvisor_data['Restaurant'] == selected_restaurant]
-
-            # Display reviews
-            st.markdown(f"### Google Reviews for {selected_restaurant}")
-            if not google_reviews.empty:
-                st.dataframe(google_reviews[['Author', 'Review']])
-
-            st.markdown(f"### TripAdvisor Reviews for {selected_restaurant}")
-            if not tripadvisor_reviews.empty:
-                st.dataframe(tripadvisor_reviews[['Author', 'Review']])
-
     except ValueError as e:
         st.error(f"Error: {e}")
     except KeyError as e:

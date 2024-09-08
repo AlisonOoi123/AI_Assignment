@@ -10,12 +10,30 @@ st.markdown(
         background-image: url("{image_url}");
         background-size: cover;
     }}
+    .table-container {{
+        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); /* Shadow for better visibility */
+    }}
+    table {{
+        width: 100%;
+        border-collapse: collapse;
+    }}
+    th, td {{
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }}
+    th {{
+        background-color: #f4f4f4;
+    }}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-st.markdown('<h1 style="font-size:35px;">Most Popular Restaurants Based on Reviews and Ratings</h1>', unsafe_allow_html=True)
+st.markdown('<h1 style="font-size:35px; color: #ffffff;">Most Popular Restaurants Based on Reviews and Ratings</h1>', unsafe_allow_html=True)
 
 # Load the GoogleReview and TripAdvisor datasets
 google_review_data = pd.read_csv('GoogleReview_data_cleaned.csv')
@@ -118,8 +136,8 @@ def update_display(location, top_n, min_rating, max_rating):
         # Convert the restaurant name and URL to clickable links
         popular_restaurants['url'] = popular_restaurants.apply(lambda row: f'<a href="{row["url"]}" target="_blank">{row["Name"]}</a>', axis=1)
 
-        # Display the DataFrame
-        st.write(popular_restaurants[['Name', 'Location', 'Number of Reviews', 'Average Rating', 'url']].to_html(escape=False), unsafe_allow_html=True)
+        # Display the DataFrame with styling
+        st.markdown('<div class="table-container">' + popular_restaurants[['Name', 'Location', 'Number of Reviews', 'Average Rating', 'url']].to_html(escape=False) + '</div>', unsafe_allow_html=True)
 
         # Display reviews for the selected restaurant
         if popular_restaurants.empty:
